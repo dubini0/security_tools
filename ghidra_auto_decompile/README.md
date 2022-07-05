@@ -22,5 +22,5 @@ This uses `analyzeHeadless` from Ghidra, and saves all recongizable code from Gh
 ## Todos
 
 - Modify bash script for multiple files
-- Exclude basic functions (ex. frame_dummy, register_tm_clones, etc..)
+- ~~Exclude basic functions (ex. frame_dummy, register_tm_clones, etc..)~~ [DONE]
 - Make Python script prettier...
