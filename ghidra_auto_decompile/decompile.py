@@ -7,34 +7,43 @@ linker_inserted_fns = [ '_start', 'deregister_tm_clones', 'register_tm_clones',
   '_fini', '_init', '__gmon_start__']
 filter_list = ['<EXTERNAL>::', '_ITM_']
 
-# get the current program
-program = currentProgram
-decompinterface = DecompInterface()
-name = currentProgram.getName()
-decompinterface.openProgram(program);
-print('[*] Binary Name : '+str(name))
+def init():
+    # get the current program
+    program = currentProgram
+    decompinterface = DecompInterface()
+    name = program.getName()
+    decompinterface.openProgram(program);
+    print('[*] Binary Name : '+str(name))
 
-# get all functions recognized
-functions = program.getFunctionManager().getFunctions(True)
+    return [program, decompinterface, name]
 
-for function in list(functions):
-    # exclude linker inserted functions
-    if any((x in str(function)) for x in filter_list):
-        continue
-    if str(function) in linker_inserted_fns:
-        continue
+def get_functions(program, decompinterface, name):
+    # get all functions recognized
+    functions = program.getFunctionManager().getFunctions(True)
+
+    for function in list(functions):
+        # exclude linker inserted functions
+        if any((x in str(function)) for x in filter_list):
+            continue
+        if str(function) in linker_inserted_fns:
+            continue
+            
+        print("[*] Function Found : "+str(function))
+        # decompile each function
+        tokengrp = decompinterface.decompileFunction(function, 0, ConsoleTaskMonitor())
+        #print(tokengrp.getDecompiledFunction().getC())
         
-    print("[*] Function Found : "+str(function))
-    # decompile each function
-    tokengrp = decompinterface.decompileFunction(function, 0, ConsoleTaskMonitor())
-    #print(tokengrp.getDecompiledFunction().getC())
-    
-    # make directory in advance
-    try:
-        if not os.path.exists(name):
-            os.makedirs(name)
-    except OSError:
-        print('[!] Error creating directory : '+name)
-       
-    with open('./'+name+'/'+str(function)+'.c', 'w') as f:
-    	f.write(str(tokengrp.getDecompiledFunction().getC()))
+        # make directory in advance
+        try:
+            if not os.path.exists(name):
+                os.makedirs(name)
+        except OSError:
+            print('[!] Error creating directory : '+name)
+           
+        with open('./'+name+'/'+str(function)+'.c', 'w') as f:
+            f.write(str(tokengrp.getDecompiledFunction().getC()))
+
+if __name__ == "__main__":
+    info = init()
+    program, decompinterface, name = info[0], info[1], info[2]
+    get_functions(program, decompinterface, name)
