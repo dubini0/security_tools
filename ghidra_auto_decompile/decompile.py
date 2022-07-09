@@ -1,8 +1,8 @@
 from ghidra.app.decompiler import DecompInterface
 from ghidra.util.task import ConsoleTaskMonitor
-import sys, os
+import sys, os, json
 
-linker_inserted_fns = [ '_start', 'deregister_tm_clones', 'register_tm_clones',
+ignore_func = [ '_start', 'deregister_tm_clones', 'register_tm_clones',
   '__do_global_dtors_aux', 'frame_dummy', '__libc_csu_init', '__libc_csu_fini',
   '_fini', '_init', '__gmon_start__']
 filter_list = ['<EXTERNAL>::', '_ITM_']
@@ -17,33 +17,37 @@ def init():
 
     return [program, decompinterface, name]
 
-def get_functions(program, decompinterface, name):
+def get_func_info(program, decompinterface, name, file_data):
     # get all functions recognized
     functions = program.getFunctionManager().getFunctions(True)
+    file_data["funcInfo"] = list()
 
     for function in list(functions):
         # exclude linker inserted functions
         if any((x in str(function)) for x in filter_list):
             continue
-        if str(function) in linker_inserted_fns:
+        if str(function) in ignore_func:
             continue
             
         print("[*] Function Found : "+str(function))
         # decompile each function
         tokengrp = decompinterface.decompileFunction(function, 0, ConsoleTaskMonitor())
-        #print(tokengrp.getDecompiledFunction().getC())
+        entrypoint = function.getEntryPoint()
+        # c_code : <type 'unicode'>
+        c_code = tokengrp.getDecompiledFunction().getC()
+        func_dict = {"funcName": str(function), "funcStartAddr": entrypoint, "decompiledFuncCode": c_code}
+        file_data["funcInfo"].append(func_dict)
         
-        # make directory in advance
-        try:
-            if not os.path.exists(name):
-                os.makedirs(name)
-        except OSError:
-            print('[!] Error creating directory : '+name)
-           
-        with open('./'+name+'/'+str(function)+'.c', 'w') as f:
-            f.write(str(tokengrp.getDecompiledFunction().getC()))
+    return file_data
+
+def dict_to_json(file_data):
+    # TODO
+    print("TODO")
 
 if __name__ == "__main__":
     info = init()
     program, decompinterface, name = info[0], info[1], info[2]
-    get_functions(program, decompinterface, name)
+    file_data = {"isStripped": "True", "decompilerName": "Ghidra", "compilerName": "gcc", "optLevel": "-O", "binaryName": str(name)}
+    file_data = get_func_info(program, decompinterface, name, file_data)
+    print(file_data)
+    dict_to_json(file_data)
