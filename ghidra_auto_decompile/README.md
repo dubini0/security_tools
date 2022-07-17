@@ -23,5 +23,5 @@ This uses `analyzeHeadless` from Ghidra, and saves decompiled code and informati
 
 - ~~Modify bash script for multiple files~~ [CANCELED]
 - ~~Exclude basic functions (ex. frame_dummy, register_tm_clones, etc..)~~ [DONE]
-- Make Python script prettier...
-- Turn output into a JSON file
+- ~~Make Python script prettier...~~ [DONE]
+- ~~Turn output into a JSON file~~ [DONE]
